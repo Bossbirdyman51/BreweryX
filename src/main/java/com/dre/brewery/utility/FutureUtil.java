@@ -21,6 +21,7 @@
 package com.dre.brewery.utility;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class FutureUtil {
@@ -30,7 +31,16 @@ public class FutureUtil {
     }
 
     public static <T> CompletableFuture<List<T>> mergeFutures(List<CompletableFuture<T>> completableFutureList) {
-        return CompletableFuture.allOf(completableFutureList.toArray(CompletableFuture[]::new))
-            .thenApplyAsync(ignored -> completableFutureList.stream().map(CompletableFuture::join).toList());
+        // Filter out null futures to prevent NPE
+        List<CompletableFuture<T>> filteredFutures = completableFutureList.stream()
+            .filter(Objects::nonNull)
+            .toList();
+
+        if (filteredFutures.isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
+        return CompletableFuture.allOf(filteredFutures.toArray(CompletableFuture[]::new))
+            .thenApplyAsync(ignored -> filteredFutures.stream().map(CompletableFuture::join).toList());
     }
 }

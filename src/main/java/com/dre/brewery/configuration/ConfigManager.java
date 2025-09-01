@@ -137,15 +137,19 @@ public class ConfigManager {
         configRecipes.clear();
 
         for (var recipeEntry : getConfig(RecipesFile.class).getRecipes().entrySet()) {
-            BRecipe recipe = BRecipe.fromConfig(recipeEntry.getKey(), recipeEntry.getValue());
-            if (recipe != null && recipe.isValid()) {
-                configRecipes.add(recipe);
-            } else {
-                Logging.errorLog("Loading the Recipe with id: '" + recipeEntry.getKey() + "' failed!");
+            try {
+                BRecipe recipe = BRecipe.fromConfig(recipeEntry.getKey(), recipeEntry.getValue());
+                if (recipe != null && recipe.isValid()) {
+                    configRecipes.add(recipe);
+                } else {
+                    Logging.errorLog("Loading the Recipe with id: '" + recipeEntry.getKey() + "' failed!");
+                }
+            } catch (Exception e) {
+                Logging.errorLog("Failed to load recipe '" + recipeEntry.getKey() + "' due to plugin dependency issue: " + e.getMessage());
+                // Continue loading other recipes instead of failing completely
             }
-
-            BRecipe.setNumConfigRecipes(configRecipes.size());
         }
+        BRecipe.setNumConfigRecipes(configRecipes.size());
     }
 
 

@@ -172,10 +172,8 @@ public final class BreweryPlugin extends JavaPlugin {
 
         // Load objects
         DataManager.loadMiscData(dataManager.getBreweryMiscData());
-        dataManager.getAllBarrels().thenAcceptAsync(barrels -> barrels.stream()
-            .filter(Objects::nonNull)
-            .forEach(Barrel::registerBarrel)
-        );
+
+        // Load cauldrons, players, and wakeups immediately
         BCauldron.getBcauldrons().putAll(dataManager.getAllCauldrons().stream()
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(
@@ -193,6 +191,14 @@ public final class BreweryPlugin extends JavaPlugin {
             .stream()
             .filter(Objects::nonNull)
             .toList());
+
+        // Delay barrel loading to ensure all worlds are loaded (fixes Iris compatibility)
+        BreweryPlugin.getScheduler().runTaskLater(() -> {
+            dataManager.getAllBarrels().thenAcceptAsync(barrels -> barrels.stream()
+                .filter(Objects::nonNull)
+                .forEach(Barrel::registerBarrel)
+            );
+        }, 100L); // 5 seconds delay (100 ticks)
 
         addonManager.enableAddons();
         // Setup Metrics
